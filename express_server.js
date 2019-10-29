@@ -54,8 +54,6 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL
-  console.log(urlDatabase)
-  console.log(req.body)
   res.redirect(`urls/${shortURL}`);
 });
 
@@ -63,3 +61,7 @@ function generateRandomString() {
   return Math.random(36).toString(36).slice(2, 8);
 };
 
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL]
+  res.redirect(`/urls`);
+});
