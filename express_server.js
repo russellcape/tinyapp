@@ -65,3 +65,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL]
   res.redirect(`/urls`);
 });
+
+app.post("/urls/:id", (req, res) => {
+  delete urlDatabase[req.params.shortURL]
+  res.redirect(`/urls`);
+});
+
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username)
+  res.redirect(`/urls`);
+});
