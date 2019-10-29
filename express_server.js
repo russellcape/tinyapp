@@ -95,10 +95,12 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   delete res.clearCookie("username", req.body.username)
-  res.redirect(`/urls`);
+  res.redirect(`/register`);
 });
 
 app.post("/register", (req, res) => {
+  user_id = generateRandomString()
+  users[user_id] = req.body.user2RandomID
   res.redirect(`/urls`);
 });
 
