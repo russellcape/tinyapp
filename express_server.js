@@ -99,12 +99,37 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  user_id = generateRandomString()
-  users[user_id] = req.body.user_id
+  users.userID = generateRandomString()
+  const { id, email, password} = req.body;
+
+  
+    const pbjExists = (userID) => {
+    if (userID[email]) {
+      return true
+    }
+    return false
+  }
+
+  //userid = generateRandomString()
+  //extract info
+  //check if valid
+  //check if user exist
+  //store the new user. add user to user db
+  //set cookie to log in the user
+  // redirect
   res.redirect(`/urls`);
 });
 
 app.get("/register", (req, res) => {
   let templateVars = { user: users, username: req.cookies["email"]};
   res.render("register", templateVars);;
+});
+
+app.post("/register", (req, res) => {
+  res.redirect(`/login`);
+});
+
+app.get("/login", (req, res) => {
+  let templateVars = { user: users, username: req.cookies["email"]};
+  res.render("login", templateVars);;
 });
