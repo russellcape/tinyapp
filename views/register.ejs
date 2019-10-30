@@ -6,18 +6,18 @@
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <head>
-    <% include ./partials/_header.ejs %>
+    <% include ./partials/_regHeader.ejs %>
   </head>  
   <body>
-      <h1> TinyApp Registration Form</h1>
-<form action="/register" method="POST">	
+      <h1>Create a TinyApp Account</h1>
+        <form class="form-inline" action="/urls" method="POST">	
      <table>		
            <tr>			
                <td>				
                    Email Address:			
                </td>			
                 <td>				
-                   <input type="email" name="email">			
+                   <input type="email" name="email" placeholder="example@gmail.com">			
                 </td>		
            </tr>
             <tr>
@@ -25,7 +25,7 @@
                    Password:			
                  </td>			
                  <td>				
-                  <input type=”password” name=”password”>			
+                  <input type=”password” name=”password” placeholder="*******">			
                   <button type="signin" class="btn btn-primary">Sign In</button>
                  </td>		
            </tr>	
