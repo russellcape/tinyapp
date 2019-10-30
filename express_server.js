@@ -100,7 +100,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   user_id = generateRandomString()
-  users[user_id] = req.body.user2RandomID
+  users[user_id] = req.body.user_id
   res.redirect(`/urls`);
 });
 
