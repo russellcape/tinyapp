@@ -95,41 +95,59 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   delete res.clearCookie("username", req.body.username)
-  res.redirect(`/register`);
-});
-
-app.post("/register", (req, res) => {
-  users.userID = generateRandomString()
-  const { id, email, password} = req.body;
-
-  
-    const pbjExists = (userID) => {
-    if (userID[email]) {
-      return true
-    }
-    return false
-  }
-
-  //userid = generateRandomString()
-  //extract info
-  //check if valid
-  //check if user exist
-  //store the new user. add user to user db
-  //set cookie to log in the user
-  // redirect
-  res.redirect(`/urls`);
-});
-
-app.get("/register", (req, res) => {
-  let templateVars = { user: users, username: req.cookies["email"]};
-  res.render("register", templateVars);;
-});
-
-app.post("/register", (req, res) => {
   res.redirect(`/login`);
 });
 
+const findUser = email => {
+  for (let userId in users) {
+    const currentUser = users[userId];
+    if (currentUser.email === email) {
+      return currentUser;
+    }
+  }
+  return false;
+};
+
+const validationErrors = (email, password) => {
+  if (password.length < 6) {
+    return 'Please provide a password of at least 6 digits';
+  }
+  return false;
+};
+
+const authenticateUser = (email, password) => {
+  const user = findUser(email);
+  if (user && bcrypt.compareSync(password, user.password)) {
+    return user;
+  } else {
+    return false;
+  }
+};
+
+  // error can be res.status(401).send('That user already exist!')
+  app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+  const id = generateRandomString();
+  const newUser = { id, email, password }
+  if (!findUser(email)) {
+    users[id] = newUser;
+    res.cookie("user_id", newUser["id"])
+    res.redirect(`/urls`);
+  } 
+  if (findUser(email)) {
+    res.render(`register`, {error: "That user Already Exists"})
+  }
+ });
+
+  
+app.get("/register", (req, res) => {
+  res.render("register",{error:""});
+});
+
+app.post("/login", (req, res) => {
+  res.redirect(`/urls`);
+});
+
 app.get("/login", (req, res) => {
-  let templateVars = { user: users, username: req.cookies["email"]};
-  res.render("login", templateVars);;
+  res.render("login");;
 });

@@ -10,7 +10,7 @@
   </head>  
   <body>
       <h1>Create a TinyApp Account</h1>
-        <form class="form-inline" action="/urls" method="POST">	
+        <form class="form-inline" action="/register" method="POST">	
      <table>		
            <tr>			
                <td>				
@@ -25,9 +25,13 @@
                    Password:			
                  </td>			
                  <td>				
-                  <input type=”password” name=”password” placeholder="*******">			
-                  <button type="signin" class="btn btn-primary">Sign In</button>
-                 </td>		
+                  <input type="password" name="password" placeholder="*******">			
+                  <button type="submit" class="btn btn-primary">Sign In</button>
+                 </td>
+                 <td> <% if (error) {%>
+                  <%= error %>
+                  <% } %>		
+                </td>
            </tr>	
      </table>
 </form> 
