@@ -54,17 +54,17 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["username"]};
+  let templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["username"]};
+  let templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"], };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: req.cookies["user_id"] };
   res.render("urls_show", templateVars);
 });
 
@@ -88,13 +88,13 @@ app.post("/urls/:id", (req, res) => {
   res.redirect(`/urls`);
 });
 
-app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username)
-  res.redirect(`/urls`);
-});
+// app.post("/login", (req, res) => {
+//   res.cookie("user_id", req.body.user)
+//   res.redirect(`/urls`);
+// });
 
 app.post("/logout", (req, res) => {
-  delete res.clearCookie("username", req.body.username)
+  delete res.clearCookie("user_id", req.body.user)
   res.redirect(`/login`);
 });
 
@@ -117,37 +117,41 @@ const validationErrors = (email, password) => {
 
 const authenticateUser = (email, password) => {
   const user = findUser(email);
-  if (user && bcrypt.compareSync(password, user.password)) {
+  if (user && password) {
     return user;
   } else {
     return false;
   }
 };
 
-  // error can be res.status(401).send('That user already exist!')
   app.post("/register", (req, res) => {
   const { email, password } = req.body;
   const id = generateRandomString();
   const newUser = { id, email, password }
   if (!findUser(email)) {
     users[id] = newUser;
-    res.cookie("user_id", newUser["id"])
+    res.cookie("user_id", newUser.id)
     res.redirect(`/urls`);
-  } 
-  if (findUser(email)) {
-    res.render(`register`, {error: "That user Already Exists"})
-  }
+    return;
+  } //error: "That user Already Exists"
+    //res.status(400).send('That user already exist!')
+    res.render(`register`, {error: res.status(400).send('That user already exist!'), user: null})
  });
-
   
 app.get("/register", (req, res) => {
-  res.render("register",{error:""});
+  res.render("register",{error: "", user: users[req.cookies["user_id"]]});
 });
 
 app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  if (!authenticateUser(email, password)) {
+  res.render(`login`, { error:  res.status(403).send("Incorrect username or password"), user: users[req.cookies["user_id"]] })
+  return
+}
+  //res.send(req.body)
   res.redirect(`/urls`);
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");;
+  res.render(`login`,{ user: users[req.cookies["user_id"]],  error: "" });;
 });
