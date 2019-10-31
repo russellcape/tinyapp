@@ -6,29 +6,32 @@
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <head>
-      <% include ./partials/_loginHeader.ejs %>
+      <% include ./partials/_header.ejs %>
   </head>
   <body>
       <h1>Login</h1>
-<form>
+<form method="POST" action="/login">
 	<table>
 		<tr>
 			<td>
 				Email Address:
-			</td>
-
+      </td>
 			<td>
 				<input type="email"  placeholder="email" name="email">
 			</td>
 		</tr>
 <tr>
-<td>
+    <td>
 				Password:
 			</td>
-
 			<td>
           <input type="password" placeholder="*******" name="password" >			
           <button type="submit" class="btn btn-primary">Log In</button>
+        </td>
+        <td> 
+          <% if (error) {%>
+          <%= error %>
+          <% } %>
         </td>
 		</tr>
 	</table>
