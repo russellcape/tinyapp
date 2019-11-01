@@ -5,8 +5,8 @@ const app = express();
 const PORT = 8080; 
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID"},
+  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID"}
 };
 
 const users = { 
@@ -54,24 +54,42 @@ app.listen(PORT, () => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
-  res.render("urls_new", templateVars);
+  // extract user cookie
+  //test if user cookie is true or false
+  // if undefined rediredct to login
+  let templateVars = {urls: urlDatabase[req.body.longURL], user: users[req.cookies["user_id"]]}
+  if (users[req.cookies["user_id"]]) {
+    res.render("urls_new", templateVars);
+  }
+  else {
+    res.redirect("/login")
+  }
 });
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
-  res.render("urls_index", templateVars);
+    if (users[req.cookies["user_id"]]) {
+      res.render("urls_index", templateVars); 
+    } 
+    else {
+      res.redirect("/login")
+    }
+
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: req.cookies["user_id"] };
+  let templateVars = { shortURL: urlDatabase[req.params.shortURL], longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL
-  res.redirect(`urls/${shortURL}`);
+  if (urlsForUser(id)) {
+  return urlDatabase[shortURL] = { longURL: req.body.longURL, userId: users[req.cookies["user_id"]]};
+  } 
+  else {
+  res.redirect(`urls`);
+  }
 });
 
 function generateRandomString() {
@@ -88,25 +106,31 @@ app.post("/urls/:id", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// app.post("/login", (req, res) => {
-//   res.cookie("user_id", req.body.user)
-//   res.redirect(`/urls`);
-// });
 
 app.post("/logout", (req, res) => {
   delete res.clearCookie("user_id", req.body.user)
   res.redirect(`/login`);
 });
 
-const findUser = email => {
+const findUser = (email) => {
   for (let userId in users) {
     const currentUser = users[userId];
-    if (currentUser.email === email) {
+    if (currentUser.email === email) { //currentUser.password === password) {
       return currentUser;
     }
   }
   return false;
 };
+
+// const urlsForUser = (id) => {
+//   if (res.cookies("user_id") === users[userId].id) {
+//     return true
+//   }
+//   return false
+// }
+
+// console.log(users)
+
 
 const validationErrors = (email, password) => {
   if (password.length < 6) {
@@ -117,9 +141,10 @@ const validationErrors = (email, password) => {
 
 const authenticateUser = (email, password) => {
   const user = findUser(email);
-  if (user && password) {
-    return user;
-  } else {
+  if (user && user.password === password) {
+      return user;
+    }
+  else {
     return false;
   }
 };
@@ -128,14 +153,13 @@ const authenticateUser = (email, password) => {
   const { email, password } = req.body;
   const id = generateRandomString();
   const newUser = { id, email, password }
-  if (!findUser(email)) {
+  if (!findUser(email, password)) {
     users[id] = newUser;
     res.cookie("user_id", newUser.id)
     res.redirect(`/urls`);
     return;
-  } //error: "That user Already Exists"
-    //res.status(400).send('That user already exist!')
-    res.render(`register`, {error: res.status(400).send('That user already exist!'), user: null})
+  } 
+    res.status(401).render(`register`, {error: ('That user already exist!'), user: null})
  });
   
 app.get("/register", (req, res) => {
@@ -143,12 +167,15 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  //extracts email/password
   const { email, password } = req.body;
-  if (!authenticateUser(email, password)) {
-  res.render(`login`, { error:  res.status(403).send("Incorrect username or password"), user: users[req.cookies["user_id"]] })
-  return
-}
-  //res.send(req.body)
+  //encase the currentUser object in authenticateUser
+  const userObj = authenticateUser(email, password)
+  if (!userObj) {
+    res.status(403).render(`login`, { error: "Incorrect username or password", user: users[req.cookies["user_id"]] })
+    return;
+  } //logging in with
+  res.cookie("user_id", userObj.id)
   res.redirect(`/urls`);
 });
 
