@@ -84,12 +84,8 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
-  if (urlsForUser(id)) {
-  return urlDatabase[shortURL] = { longURL: req.body.longURL, userId: users[req.cookies["user_id"]]};
-  } 
-  else {
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userId: users[req.cookies["user_id"]]};
   res.redirect(`urls`);
-  }
 });
 
 function generateRandomString() {
