@@ -5,8 +5,8 @@ const app = express();
 const PORT = 8080; 
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID"},
-  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID"}
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID" },
+  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID" }
 };
 
 const users = { 
@@ -53,6 +53,7 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+
 app.get("/urls/new", (req, res) => {
   // extract user cookie
   //test if user cookie is true or false
@@ -74,18 +75,44 @@ app.get("/urls", (req, res) => {
     else {
       res.redirect("/login")
     }
+});
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  res.redirect(longURL);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: urlDatabase[req.params.shortURL], longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["user_id"]] };
-  res.render("urls_show", templateVars);
+  let templateVars = {
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL].longURL, 
+    user: users[req.cookies["user_id"]],
+  }
+  if (users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userId) {
+  // console.log(req.params)
+  // console.log(req.params.shortURL)
+  // console.log(urlDatabase[req.params.shortURL].longURL)
+  // console.log(urlDatabase[req.params.shortURL].userId)
+  // console.log(req.cookies['user_id'])
+  // console.log(users[req.cookies["user_id"]])
+  // console.log(users[req.cookies["user_id"]].id)
+    res.status(404).send("The short URL cannot be located in your account");
+    return;
+  } else {
+    res.render("urls_show", templateVars);
+  }
 });
 
 app.post("/urls", (req, res) => {
-  shortURL = generateRandomString();
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userId: users[req.cookies["user_id"]]};
-  res.redirect(`urls`);
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = {
+    shortURL: shortURL, 
+    longURL: req.body.longURL, 
+    userId: req.cookies["user_id"]};
+    // console.log(urlDatabase)
+    // console.log(shortURL)
+    // console.log(req.body.longURL)
+  res.redirect(`/urls/${shortURL}`);
 });
 
 function generateRandomString() {
@@ -93,12 +120,21 @@ function generateRandomString() {
 };
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL]
+  if (users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userId) {
+    res.status(404).send("The short URL cannot be altered in your account");
+    return;
+  } else {
+  delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
+  }
 });
 
-app.post("/urls/:id", (req, res) => {
-  delete urlDatabase[req.params.shortURL]
+app.post("/urls/:shortURL", (req, res) => {
+  const { longURL, userId } = req.body;
+  urlDatabase[req.params.shortURL] = { 
+    longURL: longURL, 
+    userId: userId 
+  }
   res.redirect(`/urls`);
 });
 
@@ -111,7 +147,7 @@ app.post("/logout", (req, res) => {
 const findUser = (email) => {
   for (let userId in users) {
     const currentUser = users[userId];
-    if (currentUser.email === email) { //currentUser.password === password) {
+    if (currentUser.email === email) {
       return currentUser;
     }
   }
@@ -119,13 +155,11 @@ const findUser = (email) => {
 };
 
 // const urlsForUser = (id) => {
-//   if (res.cookies("user_id") === users[userId].id) {
-//     return true
+//   if (req.cookies['user_id'] === urlDatabase[shortURL].userId) {
+//     return urlDatabase
 //   }
 //   return false
-// }
-
-// console.log(users)
+// };
 
 
 const validationErrors = (email, password) => {
