@@ -55,7 +55,7 @@ app.listen(PORT, () => {
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  console.log(longURL)
+  //console.log(longURL)
   res.redirect(longURL); 
 });
 
@@ -70,39 +70,43 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]]};
-    if (users[req.cookies["user_id"]]) {
-      res.render("urls_index", templateVars); 
-    } 
-    else {
-      res.redirect("/login")
-    }
+  let templateVars = { urls: urlsForUser(req.cookies["user_id"]),
+     error: null, 
+     user: users[req.cookies["user_id"]]
+    };
+  if (users[req.cookies["user_id"]]) {
+    res.render("urls_index", templateVars); 
+  } 
+  if (!req.cookies['user_id']) {
+    res.redirect("/login")
+  }
 });
 
+
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { 
-    shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL].longURL, 
-    user: users[req.cookies["user_id"]]
-  };
- //if (urlDatabase[req.params.shortURL].userId.id === req.cookies['user_id']) {
-    res.render("urls_show", templateVars);
-  //} else {
-    //res.redirect("/login")
-  //}
-    // console.log(req.params)
-    // console.log(req.params.shortURL)
-    // console.log(urlDatabase[req.params.shortURL].longURL)
-    // console.log(urlDatabase[req.params.shortURL].userId)
-    // console.log(users[req.cookies["user_id"]])
-    // console.log(req.cookies['user_id'])
+      if (req.cookies['user_id']) {
+      let templateVars = { 
+        shortURL: req.params.shortURL, 
+        longURL: urlDatabase[req.params.shortURL].longURL, 
+        user: users[req.cookies["user_id"]]
+      };
+      // console.log(req.params)
+      // console.log(req.params.shortURL)
+      // console.log(urlDatabase[req.params.shortURL].longURL)  //submit new url button
+      // console.log(urlDatabase[req.params.shortURL].userId)
+      // console.log(users[req.cookies["user_id"]])
+      // console.log(req.cookies['user_id'])
+      res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("please login or register to view this short link")
+  }
 });
 
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   urlDatabase[shortURL] = { 
     longURL: req.body.longURL, 
-    userId: users[req.cookies["user_id"]]};
+    userId: users[req.cookies["user_id"]].id};
     // console.log(req.cookies['user_id'])
     // console.log(urlDatabase[shortURL].userId.id)
   res.redirect(`/urls/${shortURL}`);
@@ -113,23 +117,27 @@ function generateRandomString() {
 };
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (req.cookies['user_id'] === urlDatabase[req.params.shortURL].userId) {
   delete urlDatabase[req.params.shortURL]
   res.redirect(`/urls`);
+  } else {
+  res.status(400).render(`urls_index`, {urls: urlDatabase, error: "The short URL cannot be accessed your account", user: users[req.cookies["user_id"]]} )
+  }
 });
 
 app.post('/urls/:shortURL', (req, res) => {
-  urlDatabase[req.params.shortURL] = { 
-    longURL: req.body.longURL, 
-    userId: req.cookies['user_id'] 
-  }
-  // console.log(shortURL)
-  // console.log(req.body.longURL)
-  // console.log(req.cookies['user_id'])
-  // console.log(urlDatabase[req.params.shortURL])
-  // console.log(urlDatabase[req.params.shortURL].userId)
-  // console.log(users[req.cookies['user_id']])
-  // console.log()
+  if (req.cookies['user_id'] === urlDatabase[req.params.shortURL].userId) {
+    urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+    // console.log(req.body.longURL)
+    // console.log(urlDatabase[req.params.shortURL])        // edit submit button
+    // console.log(urlDatabase[req.params.shortURL].userId)
+    // console.log(users[req.cookies['user_id']])
+    // console.log(req.cookies['user_id'])
   res.redirect(`/urls`);
+  }
+  else {
+    res.redirect("/login")
+  }
 });
 
 
@@ -149,15 +157,16 @@ const findUser = (email) => {
 };
 
 const urlsForUser = (id) => {
-  let validURLs = [];
+  let validURLs = {};
   // Loop through the database 
   for (const key in urlDatabase) {
     // If the url's user_id matches the id of the current user push that url object to validURLS
-    if (urlDatabase[key].userID === id) {
-      validURLs.push(urlDatabase[key])
+    if (urlDatabase[key].userId === id) {
+      validURLs[key] = urlDatabase[key]
     } 
   }
-  console.log(validURLs)
+  // console.log(urlDatabase)
+  // console.log(validURLs)
   return validURLs;
 };
 
