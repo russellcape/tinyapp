@@ -38,6 +38,11 @@
             </td>
           </tr>
           <% } %>
+          <tr>
+            <% if (error) {%>
+          <%= error %>
+          <% } %>
+          </tr>
         </tbody>
     </table>
   </main>
