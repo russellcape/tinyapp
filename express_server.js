@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser")
-var cookieParser = require('cookie-parser')
+var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080; 
@@ -23,7 +23,12 @@ const users = {
   }
 }
 
-app.use(cookieParser())
+app.use(cookieSession({
+  name: 'session',
+  keys: ["nakgnresnmgsrnhg;roiesnvnsevnsavlsj"],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -61,8 +66,8 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = {urls: urlDatabase[req.body.longURL], user: users[req.cookies["user_id"]]}
-  if (users[req.cookies["user_id"]]) {
+  let templateVars = {urls: urlDatabase[req.body.longURL], user: users[req.session.user_id]}
+  if (users[req.session.user_id]) {
     res.render("urls_new", templateVars);
   }
   else {
@@ -71,25 +76,25 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlsForUser(req.cookies["user_id"]),
+  let templateVars = { urls: urlsForUser(req.session.user_id),
      error: null, 
-     user: users[req.cookies["user_id"]]
+     user: users[req.session.user_id]
     };
-  if (users[req.cookies["user_id"]]) {
+  if (users[req.session.user_id]) {
     res.render("urls_index", templateVars); 
   } 
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.redirect("/login")
   }
 });
 
 
 app.get("/urls/:shortURL", (req, res) => {
-      if (req.cookies['user_id']) {
+      if (req.session.user_id) {
       let templateVars = { 
         shortURL: req.params.shortURL, 
         longURL: urlDatabase[req.params.shortURL].longURL, 
-        user: users[req.cookies["user_id"]]
+        user: users[req.session.user_id]
       };
       // console.log(req.params)
       // console.log(req.params.shortURL)
@@ -107,7 +112,7 @@ app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   urlDatabase[shortURL] = { 
     longURL: req.body.longURL, 
-    userId: users[req.cookies["user_id"]].id};
+    userId: users[req.session.user_id].id};
     // console.log(req.cookies['user_id'])
     // console.log(urlDatabase[shortURL].userId.id)
   res.redirect(`/urls/${shortURL}`);
@@ -118,16 +123,16 @@ function generateRandomString() {
 };
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (req.cookies['user_id'] === urlDatabase[req.params.shortURL].userId) {
+  if (req.session.user_id === urlDatabase[req.params.shortURL].userId) {
   delete urlDatabase[req.params.shortURL]
   res.redirect(`/urls`);
   } else {
-  res.status(400).render(`urls_index`, {urls: urlDatabase, error: "The short URL cannot be accessed your account", user: users[req.cookies["user_id"]]} )
+  res.status(400).render(`urls_index`, {urls: urlDatabase, error: "The short URL cannot be accessed your account", user: users[req.session.user_id]} )
   }
 });
 
 app.post('/urls/:shortURL', (req, res) => {
-  if (req.cookies['user_id'] === urlDatabase[req.params.shortURL].userId) {
+  if (req.session.user_id === urlDatabase[req.params.shortURL].userId) {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
     // console.log(req.body.longURL)
     // console.log(urlDatabase[req.params.shortURL])        // edit submit button
@@ -195,7 +200,7 @@ const authenticateUser = (email, password) => {
   const newUser = { id, email, password: bcrypt.hashSync(password, 10) };
   if (!findUser(email, password)) {
     users[id] = newUser;
-    res.cookie("user_id", newUser.id)
+    req.session.user_id = newUser['id'];
     res.redirect(`/urls`);
     return;
   } 
@@ -203,7 +208,7 @@ const authenticateUser = (email, password) => {
  });
   
 app.get("/register", (req, res) => {
-  res.render("register",{error: "", user: users[req.cookies["user_id"]]});
+  res.render("register",{error: "", user: users[req.session.user_id]});
 });
 
 app.post("/login", (req, res) => {
@@ -212,13 +217,13 @@ app.post("/login", (req, res) => {
   //encase the currentUser object in authenticateUser
   const userObj = authenticateUser(email, password)
   if (!userObj) {
-    res.status(403).render(`login`, { error: "Incorrect username or password", user: users[req.cookies["user_id"]] })
+    res.status(403).render(`login`, { error: "Incorrect username or password", user: users[req.session.user_id] })
     return;
   } //logging in with
-  res.cookie("user_id", userObj.id)
+  res.session.user_id = userObj.id
   res.redirect(`/urls`);
 });
 
 app.get("/login", (req, res) => {
-  res.render(`login`,{ user: users[req.cookies["user_id"]],  error: "" });;
+  res.render(`login`,{ user: users[req.session.user_id],  error: "" });;
 });
