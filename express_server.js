@@ -5,8 +5,8 @@ const app = express();
 const PORT = 8080; 
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID" },
-  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID" }
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID"},
+  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID"}
 };
 
 const users = { 
@@ -53,11 +53,13 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  console.log(longURL)
+  res.redirect(longURL); 
+});
 
 app.get("/urls/new", (req, res) => {
-  // extract user cookie
-  //test if user cookie is true or false
-  // if undefined rediredct to login
   let templateVars = {urls: urlDatabase[req.body.longURL], user: users[req.cookies["user_id"]]}
   if (users[req.cookies["user_id"]]) {
     res.render("urls_new", templateVars);
@@ -77,41 +79,32 @@ app.get("/urls", (req, res) => {
     }
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
-});
-
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {
+  let templateVars = { 
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL, 
-    user: users[req.cookies["user_id"]],
-  }
-  if (users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userId) {
-  // console.log(req.params)
-  // console.log(req.params.shortURL)
-  // console.log(urlDatabase[req.params.shortURL].longURL)
-  // console.log(urlDatabase[req.params.shortURL].userId)
-  // console.log(req.cookies['user_id'])
-  // console.log(users[req.cookies["user_id"]])
-  // console.log(users[req.cookies["user_id"]].id)
-    res.status(404).send("The short URL cannot be located in your account");
-    return;
-  } else {
+    user: users[req.cookies["user_id"]]
+  };
+ //if (urlDatabase[req.params.shortURL].userId.id === req.cookies['user_id']) {
     res.render("urls_show", templateVars);
-  }
+  //} else {
+    //res.redirect("/login")
+  //}
+    // console.log(req.params)
+    // console.log(req.params.shortURL)
+    // console.log(urlDatabase[req.params.shortURL].longURL)
+    // console.log(urlDatabase[req.params.shortURL].userId)
+    // console.log(users[req.cookies["user_id"]])
+    // console.log(req.cookies['user_id'])
 });
 
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = {
-    shortURL: shortURL, 
+  shortURL = generateRandomString();
+  urlDatabase[shortURL] = { 
     longURL: req.body.longURL, 
-    userId: req.cookies["user_id"]};
-    // console.log(urlDatabase)
-    // console.log(shortURL)
-    // console.log(req.body.longURL)
+    userId: users[req.cookies["user_id"]]};
+    // console.log(req.cookies['user_id'])
+    // console.log(urlDatabase[shortURL].userId.id)
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -120,21 +113,22 @@ function generateRandomString() {
 };
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userId) {
-    res.status(404).send("The short URL cannot be altered in your account");
-    return;
-  } else {
-  delete urlDatabase[req.params.shortURL];
+  delete urlDatabase[req.params.shortURL]
   res.redirect(`/urls`);
-  }
 });
 
-app.post("/urls/:shortURL", (req, res) => {
-  const { longURL, userId } = req.body;
+app.post('/urls/:shortURL', (req, res) => {
   urlDatabase[req.params.shortURL] = { 
-    longURL: longURL, 
-    userId: userId 
+    longURL: req.body.longURL, 
+    userId: req.cookies['user_id'] 
   }
+  // console.log(shortURL)
+  // console.log(req.body.longURL)
+  // console.log(req.cookies['user_id'])
+  // console.log(urlDatabase[req.params.shortURL])
+  // console.log(urlDatabase[req.params.shortURL].userId)
+  // console.log(users[req.cookies['user_id']])
+  // console.log()
   res.redirect(`/urls`);
 });
 
@@ -147,19 +141,25 @@ app.post("/logout", (req, res) => {
 const findUser = (email) => {
   for (let userId in users) {
     const currentUser = users[userId];
-    if (currentUser.email === email) {
+    if (currentUser.email === email) { //currentUser.password === password) {
       return currentUser;
     }
   }
   return false;
 };
 
-// const urlsForUser = (id) => {
-//   if (req.cookies['user_id'] === urlDatabase[shortURL].userId) {
-//     return urlDatabase
-//   }
-//   return false
-// };
+const urlsForUser = (id) => {
+  let validURLs = [];
+  // Loop through the database 
+  for (const key in urlDatabase) {
+    // If the url's user_id matches the id of the current user push that url object to validURLS
+    if (urlDatabase[key].userID === id) {
+      validURLs.push(urlDatabase[key])
+    } 
+  }
+  console.log(validURLs)
+  return validURLs;
+};
 
 
 const validationErrors = (email, password) => {
