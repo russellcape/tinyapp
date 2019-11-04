@@ -16,8 +16,12 @@
           <button type="logout" class="btn btn-primary">Logout</button>
         </form>        
          <% } else { %>
-          <a href="/login">Login</a>
-          <a href="/register">Register</a>
+          <form action="/login" method="GET">
+            <button type="logout" class="btn btn-primary">Login</button>
+          </form>  
+          <form action="/register" method="GET">
+            <button type="logout" class="btn btn-primary">Register</button>
+          </form>  
           <% }%>
   </nav>
 </header>
