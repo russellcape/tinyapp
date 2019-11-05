@@ -1,7 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
-const authenticateUser = require('authenticateUser');
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080; 
