@@ -170,7 +170,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  delete res.clearCookie("user_id", req.body.user)
+  delete req.session.user_id;
   res.redirect(`/login`);
 });
 
@@ -195,7 +195,7 @@ app.post("/register", (req, res) => {
     res.redirect(`/urls`);
     return;
   } 
-    res.status(401).render(`register`, {error: ('That user already exist!'), user: null})
+  res.status(401).render(`register`, {error: ('That user already exist!'), user: null})
 });
   
 app.get("/register", (req, res) => {
